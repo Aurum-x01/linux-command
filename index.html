@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Linux – ściągawka z komend</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#EDF1F6;--surface:#fff;--ink:#1A2332;--muted:#5B677A;--line:#D5DDE8;
+  --accent:#2750D8;--accent-soft:#E3EAFD;--code-bg:#162033;--code-ink:#CFE3FF;--code-dim:#7E93B5;
+  --warn-bg:#FFF1D6;--warn-ink:#6B4300;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10161F;--surface:#18212E;--ink:#E6ECF5;--muted:#93A1B6;--line:#2A3646;
+    --accent:#8FADFF;--accent-soft:#222F4D;--code-bg:#0B1019;--code-ink:#CFE3FF;--code-dim:#6F84A6;
+    --warn-bg:#3A2D12;--warn-ink:#FFD99A;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10161F;--surface:#18212E;--ink:#E6ECF5;--muted:#93A1B6;--line:#2A3646;
+  --accent:#8FADFF;--accent-soft:#222F4D;--code-bg:#0B1019;--code-ink:#CFE3FF;--code-dim:#6F84A6;
+  --warn-bg:#3A2D12;--warn-ink:#FFD99A;color-scheme:dark;
+}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 70px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.55 "Source Sans 3",system-ui,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--surface);z-index:10}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar{max-width:880px;margin:0 auto;padding:10px 20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+nav{display:flex;gap:6px;flex:1;overflow-x:auto}
+nav a{color:var(--ink);text-decoration:none;padding:6px 14px;border-radius:999px;white-space:nowrap;font-weight:600;font-size:15px}
+nav a:hover,nav a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+#q{font:inherit;font-size:15px;padding:7px 14px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--ink);width:200px;max-width:100%}
+#q:focus{outline:2px solid var(--accent);outline-offset:1px}
+main{max-width:880px;margin:0 auto;padding:36px 20px 80px}
+h1{font:700 clamp(32px,6vw,52px)/1.05 "Bricolage Grotesque",sans-serif;margin:0 0 10px;letter-spacing:-.02em}
+.lead{color:var(--muted);margin:0 0 40px;max-width:56ch}
+section{margin-bottom:56px}
+h2{font:700 28px/1.15 "Bricolage Grotesque",sans-serif;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 20px}
+h3{font:600 17px/1.3 "Source Sans 3",sans-serif;margin:28px 0 10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:12px;overflow:hidden}
+.cmd .what{padding:12px 16px 4px;font-weight:600}
+.cmd .note{padding:0 16px 12px;color:var(--muted);font-size:16px}
+.cmd .note:empty{display:none}
+.code{display:flex;align-items:flex-start;gap:8px;background:var(--code-bg);color:var(--code-ink);padding:12px 14px;font:400 15px/1.5 "JetBrains Mono",ui-monospace,monospace}
+.code pre{margin:0;flex:1;overflow-x:auto;white-space:pre;font:inherit}
+.code .c{color:var(--code-dim)}
+.code .p{color:var(--code-dim);user-select:none}
+.copy{flex:none;font:600 13px "Source Sans 3",sans-serif;background:transparent;color:var(--code-ink);border:1px solid #3A4C6B;border-radius:6px;padding:3px 10px;cursor:pointer}
+.copy:hover,.copy:focus-visible{background:#26364F;outline:none}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:16px}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{font-weight:600;color:var(--muted);font-size:14px}
+td.m{font-family:"JetBrains Mono",monospace;font-size:15px}
+td.w{white-space:normal}
+.calc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.grid{display:grid;grid-template-columns:auto repeat(3,1fr);gap:8px 10px;align-items:center;max-width:420px}
+.grid span.h{font-size:14px;color:var(--muted);text-align:center}
+.grid label.g{font-weight:600}
+.tog{display:flex;justify-content:center}
+.tog input{position:absolute;opacity:0;width:44px;height:40px;margin:0;cursor:pointer}
+.tog span{display:flex;align-items:center;justify-content:center;width:44px;height:40px;border:1px solid var(--line);border-radius:8px;font:600 16px "JetBrains Mono",monospace;color:var(--muted);background:var(--bg)}
+.tog{position:relative;width:44px;margin:0 auto}
+.tog input:checked+span{background:var(--accent);border-color:var(--accent);color:#fff}
+.tog input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.out{margin-top:16px}
+.warn{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:12px 16px;margin-top:14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.two{grid-template-columns:1fr}.bar{padding:8px 14px}#q{width:100%}main{padding:28px 14px 60px}}
+.hide{display:none!important}
+#empty{display:none;color:var(--muted);padding:20px 0}
+footer{color:var(--muted);font-size:15px;text-align:center;padding-bottom:30px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <nav aria-label="Sekcje">
+      <a href="#uprawnienia">Uprawnienia</a>
+      <a href="#uzytkownicy">Użytkownicy i grupy</a>
+      <a href="#procesy">Procesy</a>
+    </nav>
+    <input id="q" type="search" placeholder="Szukaj komendy…" aria-label="Szukaj komendy">
+  </div>
+</header>
+
+<main>
+  <h1>Linux – ściągawka z komend</h1>
+  <p class="lead">Uprawnienia, użytkownicy, grupy i zabijanie procesów w jednym miejscu. Kliknij „Kopiuj”, żeby skopiować komendę.</p>
+  <p id="empty">Nic nie znaleziono. Spróbuj innego słowa, np. „grupa” albo „kill”.</p>
+
+  <!-- UPRAWNIENIA -->
+  <section id="uprawnienia">
+    <h2>Uprawnienia (chmod)</h2>
+    <p class="sub">Każdy plik i katalog mówi, kto może go czytać, zapisywać i uruchamiać.</p>
+
+    <h3>Trzy grupy odbiorców i trzy uprawnienia</h3>
+    <div class="two">
+      <div class="tbl"><table>
+        <tr><th>Kto</th><th>Litera</th></tr>
+        <tr><td class="w">Właściciel (owner)</td><td class="m">u</td></tr>
+        <tr><td class="w">Grupa (group)</td><td class="m">g</td></tr>
+        <tr><td class="w">Inni (others)</td><td class="m">o</td></tr>
+        <tr><td class="w">Wszyscy (all)</td><td class="m">a</td></tr>
+      </table></div>
+      <div class="tbl"><table>
+        <tr><th>Uprawnienie</th><th>Punkty</th></tr>
+        <tr><td class="m">r</td><td class="w">odczyt (read) = 4</td></tr>
+        <tr><td class="m">w</td><td class="w">zapis (write) = 2</td></tr>
+        <tr><td class="m">x</td><td class="w">uruchomienie (execute) = 1</td></tr>
+      </table></div>
+    </div>
+
+    <h3>Cyfry ósemkowe</h3>
+    <div class="tbl"><table>
+      <tr><th>Cyfra</th><th>Zapis</th><th>Znaczenie</th></tr>
+      <tr><td class="m">0</td><td class="m">---</td><td class="w">brak uprawnień</td></tr>
+      <tr><td class="m">1</td><td class="m">--x</td><td class="w">tylko uruchamianie</td></tr>
+      <tr><td class="m">2</td><td class="m">-w-</td><td class="w">tylko zapis</td></tr>
+      <tr><td class="m">3</td><td class="m">-wx</td><td class="w">zapis i uruchamianie</td></tr>
+      <tr><td class="m">4</td><td class="m">r--</td><td class="w">tylko odczyt</td></tr>
+      <tr><td class="m">5</td><td class="m">r-x</td><td class="w">odczyt i uruchamianie</td></tr>
+      <tr><td class="m">6</td><td class="m">rw-</td><td class="w">odczyt i zapis</td></tr>
+      <tr><td class="m">7</td><td class="m">rwx</td><td class="w">odczyt, zapis i uruchamianie</td></tr>
+    </table></div>
+
+    <h3>Kalkulator chmod</h3>
+    <div class="calc">
+      <div class="grid" id="grid"></div>
+      <div class="out">
+        <div class="code"><pre id="calcOut"></pre><button class="copy" data-target="calcOut">Kopiuj</button></div>
+      </div>
+    </div>
+
+    <h3>Komendy</h3>
+    <div class="cmd"><div class="what">Ustaw uprawnienia cyframi</div>
+      <div class="code"><pre>chmod 744 plik.sh</pre><button class="copy">Kopiuj</button></div>
+      <div class="note">7 = rwx dla właściciela, 4 = r-- dla grupy, 4 = r-- dla innych.</div></div>
+    <div class="cmd"><div class="what">Dodaj prawo uruchamiania właścicielowi</div>
+      <div class="code"><pre>chmod u+x plik.sh</pre><button class="copy">Kopiuj</button></div>
+      <div class="note">Operatory: <b>+</b> dodaje, <b>-</b> zabiera, <b>=</b> ustawia dokładnie to, co podano.</div></div>
+    <div class="cmd"><div class="what">Zabierz odczyt i zapis grupie oraz innym</div>
+      <div class="code"><pre>chmod go-rw plik.txt</pre><button class="copy">Kopiuj</button></div><div class="note"></div></div>
+    <div class="cmd"><div class="what">Sprawdź uprawnienia pliku</div>
+      <div class="code"><pre>ls -l</pre><button class="copy">Kopiuj</button></div>
+      <div class="code" style="border-top:1px solid #26364F"><pre><span class="c">-rwxr--r-- 1 user group 1234 Jan 1 12:00 plik.sh
+ └┬┘└┬┘└┬┘
+  │  │  └ inni: r--
+  │  └──── grupa: r--
+  └─────── właściciel: rwx</span></pre></div><div class="note"></div></div>
+
+    <h3>Plik a katalog</h3>
+    <div class="tbl"><table>
+      <tr><th></th><th>Plik</th><th>Katalog</th></tr>
+      <tr><td class="m">r</td><td class="w">wyświetlić zawartość (<code>cat</code>, <code>less</code>, <code>more</code>)</td><td class="w">zobaczyć listę plików (<code>ls</code>)</td></tr>
+      <tr><td class="m">w</td><td class="w">zmieniać zawartość (<code>nano</code>, <code>vim</code>)</td><td class="w">tworzyć, usuwać i zmieniać nazwy plików i podkatalogów</td></tr>
+      <tr><td class="m">x</td><td class="w">uruchomić jako program lub skrypt</td><td class="w">wejść do katalogu (<code>cd</code>) i sięgnąć po plik, jeśli znasz jego nazwę</td></tr>
+    </table></div>
+  </section>
+
+  <!-- UŻYTKOWNICY -->
+  <section id="uzytkownicy">
+    <h2>Użytkownicy i grupy</h2>
+    <p class="sub"><code>sudo</code> uruchamia polecenie z uprawnieniami administratora.</p>
+
+    <div class="cmd"><div class="what">Utwórz użytkownika z katalogiem domowym</div>
+      <div class="code"><pre>sudo useradd -m jan</pre><button class="copy">Kopiuj</button></div><div class="note"></div></div>
+    <div class="cmd"><div class="what">Ustaw hasło użytkownika</div>
+      <div class="code"><pre>sudo passwd jan</pre><button class="copy">Kopiuj</button></div>
+      <div class="note">Wpisz nowe hasło dwa razy. Znaki nie będą widoczne.</div></div>
+    <div class="cmd"><div class="what">Utwórz grupę</div>
+      <div class="code"><pre>sudo groupadd klasa</pre><button class="copy">Kopiuj</button></div><div class="note"></div></div>
+    <div class="cmd"><div class="what">Dodaj użytkownika do grupy</div>
+      <div class="code"><pre>sudo usermod -aG klasa jan</pre><button class="copy">Kopiuj</button></div>
+      <div class="note">Nie pomijaj <b>-a</b>. Bez niego użytkownik może zostać usunięty z innych grup. Zmiana może wymagać ponownego zalogowania.</div></div>
+    <div class="cmd"><div class="what">Usuń użytkownika z grupy</div>
+      <div class="code"><pre>sudo gpasswd -d jan klasa</pre><button class="copy">Kopiuj</button></div><div class="note"></div></div>
+    <div class="cmd"><div class="what">Zmień właściciela pliku</div>
+      <div class="code"><pre>sudo chown jan plik.txt</pre><button class="copy">Kopiuj</button></div><div class="note"></div></div>
+    <div class="cmd"><div class="what">Zmień grupę pliku</div>
+      <div class="code"><pre>sudo chgrp klasa plik.txt</pre><button class="copy">Kopiuj</button></div><div class="note"></div></div>
+
+    <h3>Sprawdzanie</h3>
+    <div class="cmd"><div class="what">Kim jestem, kim jest Jan, jakie ma grupy</div>
+      <div class="code"><pre>whoami              <span class="c"># kim jesteś zalogowany</span>
+id jan              <span class="c"># ID użytkownika jan i jego grupy</span>
+groups jan          <span class="c"># grupy użytkownika jan</span>
+ls -l plik.txt      <span class="c"># właściciel i grupa pliku</span></pre><button class="copy">Kopiuj</button></div>
+      <div class="code" style="border-top:1px solid #26364F"><pre><span class="c">-rw-r--r-- 1 jan klasa 120 paź 19 10:00 plik.txt
+              └┬┘ └─┬─┘
+               │    └ grupa pliku: klasa
+               └ właściciel: jan</span></pre></div><div class="note"></div></div>
+  </section>
+
+  <!-- PROCESY -->
+  <section id="procesy">
+    <h2>Procesy: kill i killall</h2>
+    <p class="sub">Wysyłają sygnały do procesów, na przykład żeby je zakończyć.</p>
+
+    <h3>Ćwiczenie na dwóch terminalach</h3>
+    <div class="cmd"><div class="what">Terminal 1: uruchom edytor i zostaw go otwarty</div>
+      <div class="code"><pre>nano abc.txt</pre><button class="copy">Kopiuj</button></div><div class="note"></div></div>
+    <div class="cmd"><div class="what">Terminal 2: wyświetl swoje procesy</div>
+      <div class="code"><pre>ps x</pre><button class="copy">Kopiuj</button></div>
+      <div class="code" style="border-top:1px solid #26364F"><pre><span class="c">  PID TTY      STAT   TIME COMMAND
+ 4321 pts/0    S+     0:00 nano abc.txt</span></pre></div>
+      <div class="note">Znajdź wiersz z <code>nano abc.txt</code>. Liczba w kolumnie PID to numer procesu. U Ciebie będzie inny.</div></div>
+    <div class="cmd"><div class="what">Sposób 1: zakończ proces po PID</div>
+      <div class="code"><pre>kill 4321</pre><button class="copy">Kopiuj</button></div>
+      <div class="note">Zamiast 4321 wpisz PID znaleziony przez <code>ps x</code>.</div></div>
+    <div class="cmd"><div class="what">Sposób 2: zakończ wszystkie procesy o danej nazwie</div>
+      <div class="code"><pre>killall nano</pre><button class="copy">Kopiuj</button></div>
+      <div class="note">Nie trzeba znać PID. Dotyczy wszystkich procesów o tej nazwie, które możesz kontrolować. Przed użyciem uruchom ponownie <code>nano abc.txt</code> w terminalu 1.</div></div>
+    <div class="cmd"><div class="what">Wymuszone zakończenie (ostateczność)</div>
+      <div class="code"><pre>kill -9 4321</pre><button class="copy">Kopiuj</button></div>
+      <div class="note">Używaj, gdy zwykłe <code>kill</code> nie działa. Program nie zapisze danych ani nie posprząta po sobie.</div></div>
+
+    <div class="warn"><b>Uwaga:</b> jeśli w <code>nano</code> są niezapisane zmiany, zakończenie procesu może je zepsuć lub usunąć.</div>
+
+    <h3>Zapamiętaj</h3>
+    <div class="tbl"><table>
+      <tr><th>Komenda</th><th>Co robi</th></tr>
+      <tr><td class="m">ps x</td><td class="w">pokazuje Twoje procesy</td></tr>
+      <tr><td class="m">kill PID</td><td class="w">wysyła sygnał zakończenia do procesu o danym PID</td></tr>
+      <tr><td class="m">killall NAZWA</td><td class="w">wysyła sygnał do procesów o podanej nazwie</td></tr>
+      <tr><td class="m">kill -9 PID</td><td class="w">wymusza zakończenie procesu</td></tr>
+    </table></div>
+  </section>
+</main>
+<footer>Ściągawka z notatek 03, 04 i 05</footer>
+
+<script>
+function copyText(t,btn){
+  var done=function(){var o=btn.textContent;btn.textContent="Skopiowano";setTimeout(function(){btn.textContent=o},1200)};
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,fb);return}
+  }catch(e){}
+  fb();
+  function fb(){
+    try{var a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();document.execCommand("copy");document.body.removeChild(a);done()}catch(e){btn.textContent="Zaznacz ręcznie"}
+  }
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest(".copy");if(!b)return;
+  var pre=b.dataset.target?document.getElementById(b.dataset.target):b.parentElement.querySelector("pre");
+  var txt=pre.innerText.split("\n").map(function(l){return l.replace(/\s+#.*$/,"")}).join("\n").trim();
+  copyText(txt,b);
+});
+
+// kalkulator chmod
+var rows=[["Właściciel",4],["Grupa",2],["Inni",1]];
+var grid=document.getElementById("grid");
+var html='<span></span><span class="h">odczyt</span><span class="h">zapis</span><span class="h">uruch.</span>';
+["Właściciel","Grupa","Inni"].forEach(function(n,i){
+  html+='<label class="g">'+n+'</label>';
+  ["r","w","x"].forEach(function(l,j){
+    html+='<div class="tog"><input type="checkbox" data-i="'+i+'" data-v="'+[4,2,1][j]+'" data-l="'+l+'" aria-label="'+n+' '+l+'"'+(i===0&&j<3||(i>0&&j===0)?' checked':'')+'><span>'+l+'</span></div>';
+  });
+});
+grid.innerHTML=html;
+function calc(){
+  var sum=[0,0,0],sym=["","",""];
+  ["r","w","x"].forEach(function(){});
+  var boxes=grid.querySelectorAll("input");
+  var st={};
+  boxes.forEach(function(b){st[b.dataset.i+b.dataset.l]=b.checked;if(b.checked)sum[b.dataset.i]+=+b.dataset.v});
+  for(var i=0;i<3;i++){["r","w","x"].forEach(function(l){sym[i]+=st[i+l]?l:"-"})}
+  document.getElementById("calcOut").textContent="chmod "+sum.join("")+" plik.sh   # "+sym.join("")+" = "+sym[0]+" "+sym[1]+" "+sym[2];
+}
+grid.addEventListener("change",calc);calc();
+
+// wyszukiwarka
+var q=document.getElementById("q");
+q.addEventListener("input",function(){
+  var v=q.value.trim().toLowerCase(),any=false;
+  document.querySelectorAll("section").forEach(function(s){
+    var shown=0;
+    s.querySelectorAll(".cmd").forEach(function(c){
+      var ok=!v||c.textContent.toLowerCase().indexOf(v)>-1;
+      c.classList.toggle("hide",!ok);if(ok)shown++;
+    });
+    s.querySelectorAll(".tbl,.calc,.two,.warn,h3").forEach(function(x){x.classList.toggle("hide",!!v)});
+    s.classList.toggle("hide",!!v&&!shown);
+    if(!v||shown)any=true;
+  });
+  document.getElementById("empty").style.display=any?"none":"block";
+});
+</script>
+</body>
+</html>
